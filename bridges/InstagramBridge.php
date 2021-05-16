@@ -49,6 +49,16 @@ class InstagramBridge extends BridgeAbstract {
 	const USER_QUERY_HASH = '58b6785bea111c67129decbe6a448951';
 	const TAG_QUERY_HASH = '9b498c08113f1e09617a1703c22b2f32';
 	const SHORTCODE_QUERY_HASH = '865589822932d1b43dfe312121dd353a';
+	const CACHE_TIMEOUT = 43200; // 12 hours
+
+	protected function getHeaders() {
+		$sessionId = getenv('INSTAGRAM_SESSION_ID');
+		if (!empty($sessionId)) {
+			return array(sprintf('cookie: sessionid=%s', $sessionId));
+		}
+
+		return array();
+	}
 
 	protected function getInstagramUserId($username) {
 
@@ -62,7 +72,7 @@ class InstagramBridge extends BridgeAbstract {
 		$key = $cache->loadData();
 
 		if($key == null) {
-				$data = getContents(self::URI . 'web/search/topsearch/?query=' . $username);
+				$data = getContents(self::URI . 'web/search/topsearch/?query=' . $username, $this->getHeaders());
 
 				foreach(json_decode($data)->users as $user) {
 					if(strtolower($user->user->username) === strtolower($username)) {
@@ -225,7 +235,7 @@ class InstagramBridge extends BridgeAbstract {
 								 self::USER_QUERY_HASH .
 								 '&variables={"id"%3A"' .
 								$userId .
-								'"%2C"first"%3A10}');
+								'"%2C"first"%3A10}', $this->getHeaders());
 			return json_decode($data);
 
 		} elseif(!is_null($this->getInput('h'))) {
